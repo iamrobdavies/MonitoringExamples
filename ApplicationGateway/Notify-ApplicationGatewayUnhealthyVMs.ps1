@@ -8,7 +8,7 @@ Get-AzureRmSubscription
 #====================END OF CONNECTION SETUP=======================
 
 $convertedRequestBody = ConvertFrom-Json -InputObject $webhookData.RequestBody
-$actionWebhookURI = Get-AutomationVariable -Name 'LogicAppWebhook'
+$actionWebhookURI = Get-AutomationVariable -Name 'SendAppGatewayAlertEmailWebhook'
 
 foreach($resultRow in $convertedRequestBody.SearchResult.tables.rows){
     #parse out the appGW & Resource Group from alert results
