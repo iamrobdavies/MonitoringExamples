@@ -1,0 +1,4 @@
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK" and Category == "ApplicationGatewayPerformanceLog"
+| where TimeGenerated > ago(15m)
+| summarize max(unHealthyHostCount_d) by Resource, ResourceGroup
