@@ -1,159 +1,159 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "connections_outlook_name": {
-            "defaultValue": "outlookConnection",
-            "type": "string"
-        },
-        "logicAppName": {
-            "defaultValue": "SendAppGatewayAlertEmail",
-            "type": "string"
-        },
-        "emailRecipient":{
-            "type": "string"
-        },
-        "emailConnectionName":{
-            "type": "string"
-        }
-    },
-    "variables": {},
-    "resources": [
-        {
-            "type": "Microsoft.Logic/workflows",
-            "name": "[parameters('logicAppName')]",
-            "apiVersion": "2016-06-01",
-            "location": "[resourceGroup().location]",
-            "tags": {},
-            "scale": null,
-            "properties": {
-                "state": "Enabled",
-                "definition": {
-                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "$connections": {
-                            "defaultValue": {},
-                            "type": "Object"
-                        }
-                    },
-                    "triggers": {
-                        "manual": {
-                            "type": "Request",
-                            "kind": "Http",
-                            "inputs": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "actions": {
-                        "Create_HTML_table": {
-                            "runAfter": {
-                                "Parse_JSON": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "Table",
-                            "inputs": {
-                                "format": "HTML",
-                                "from": "@body('Parse_JSON')?['vms']"
-                            }
-                        },
-                        "Parse_JSON": {
-                            "runAfter": {},
-                            "type": "ParseJson",
-                            "inputs": {
-                                "content": "@triggerBody()",
-                                "schema": {
-                                    "properties": {
-                                        "ApplicationGatewayName": {
-                                            "type": "string"
-                                        },
-                                        "ApplicationGatewayResourceGroup": {
-                                            "type": "string"
-                                        },
-                                        "BackendPoolName": {
-                                            "type": "string"
-                                        },
-                                        "vms": {
-                                            "items": {
-                                                "properties": {
-                                                    "Name": {
-                                                        "type": "string"
-                                                    },
-                                                    "ResourceGroupName": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "Name",
-                                                    "ResourceGroupName"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        },
-                        "Send_an_email": {
-                            "runAfter": {
-                                "Create_HTML_table": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "ApiConnection",
-                            "inputs": {
-                                "body": {
-                                    "Body": "Unhealthy VM on Application Gateway: <b>@{body('Parse_JSON')?['ApplicationGatewayName']} </b> in Resource Group: <b>@{body('Parse_JSON')?['ApplicationGatewayResourceGroup']}.</b><br>\nImpacted Backend Pool: <b> @{body('Parse_JSON')?['BackendPoolName']}</b>\n<br> <br>\nThese are the impacted VMs: <br>\n@{body('Create_HTML_table')}\n<br>\n<b>Next Steps:</b>\n<ul>\n<li>Check if the VM is running</li>\n<li>Check if the VM is still unhealthy in the backend pool of the application gateway</li>\n<li>Check the 'Application Gateway' dashboard in the Azure Portal for failures</li>\n</ul>",
-                                    "Importance": "Normal",
-                                    "IsHtml": true,
-                                    "Subject": "Unhealthy backend VM in Pool @{body('Parse_JSON')?['BackendPoolName']} on Application Gateway @{body('Parse_JSON')?['ApplicationGatewayName']}",
-                                    "To": "[parameters('emailRecipient')]"
-                                },
-                                "host": {
-                                    "connection": {
-                                        "name": "@parameters('$connections')['outlook']['connectionId']"
-                                    }
-                                },
-                                "method": "post",
-                                "path": "/Mail"
-                            }
-                        }
-                    },
-                    "outputs": {}
-                },
-                "parameters": {
-                    "$connections": {
-                        "value": {
-                            "outlook": {
-                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connections_outlook_name'))]",
-                                "connectionName": "[parameters('connections_outlook_name')]",
-                                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/outlook')]"
-                            }
-                        }
-                    }
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('connections_outlook_name'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Web/connections",
-            "name": "[parameters('connections_outlook_name')]",
-            "apiVersion": "2016-06-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "displayName": "[parameters('emailConnectionName')]",
-                "customParameterValues": {},
-                "api": {
-                    "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/outlook')]"
-                }
-            },
-            "dependsOn": []
-        }
-    ]
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "connections_outlook_name": {
+          "defaultValue": "Office365Connection",
+          "type": "string"
+      },
+      "logicAppName": {
+          "defaultValue": "SendAppGatewayAlertEmail",
+          "type": "string"
+      },
+      "emailRecipient":{
+          "type": "string"
+      },
+      "emailSender":{
+          "type": "string"
+      }
+  },
+  "variables": {},
+  "resources": [
+      {
+          "type": "Microsoft.Logic/workflows",
+          "name": "[parameters('logicAppName')]",
+          "apiVersion": "2016-06-01",
+          "location": "[resourceGroup().location]",
+          "tags": {},
+          "scale": null,
+          "properties": {
+              "state": "Enabled",
+              "definition": {
+                  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                  "contentVersion": "1.0.0.0",
+                  "parameters": {
+                      "$connections": {
+                          "defaultValue": {},
+                          "type": "Object"
+                      }
+                  },
+                  "triggers": {
+                      "manual": {
+                          "type": "Request",
+                          "kind": "Http",
+                          "inputs": {
+                              "schema": {}
+                          }
+                      }
+                  },
+                  "actions": {
+                      "Create_HTML_table": {
+                          "runAfter": {
+                              "Parse_JSON": [
+                                  "Succeeded"
+                              ]
+                          },
+                          "type": "Table",
+                          "inputs": {
+                              "format": "HTML",
+                              "from": "@body('Parse_JSON')?['vms']"
+                          }
+                      },
+                      "Parse_JSON": {
+                          "runAfter": {},
+                          "type": "ParseJson",
+                          "inputs": {
+                              "content": "@triggerBody()",
+                              "schema": {
+                                  "properties": {
+                                      "ApplicationGatewayName": {
+                                          "type": "string"
+                                      },
+                                      "ApplicationGatewayResourceGroup": {
+                                          "type": "string"
+                                      },
+                                      "BackendPoolName": {
+                                          "type": "string"
+                                      },
+                                      "vms": {
+                                          "items": {
+                                              "properties": {
+                                                  "Name": {
+                                                      "type": "string"
+                                                  },
+                                                  "ResourceGroupName": {
+                                                      "type": "string"
+                                                  }
+                                              },
+                                              "required": [
+                                                  "Name",
+                                                  "ResourceGroupName"
+                                              ],
+                                              "type": "object"
+                                          },
+                                          "type": "array"
+                                      }
+                                  },
+                                  "type": "object"
+                              }
+                          }
+                      },
+                      "Send_an_email": {
+                          "runAfter": {
+                              "Create_HTML_table": [
+                                  "Succeeded"
+                              ]
+                          },
+                          "type": "ApiConnection",
+                          "inputs": {
+                              "body": {
+                                  "Body": "Unhealthy VM on Application Gateway: <b>@{body('Parse_JSON')?['ApplicationGatewayName']} </b> in Resource Group: <b>@{body('Parse_JSON')?['ApplicationGatewayResourceGroup']}.</b><br>\nImpacted Backend Pool: <b> @{body('Parse_JSON')?['BackendPoolName']}</b>\n<br> <br>\nThese are the impacted VMs: <br>\n@{body('Create_HTML_table')}\n<br>\n<b>Next Steps:</b>\n<ul>\n<li>Check if the VM is running</li>\n<li>Check if the VM is still unhealthy in the backend pool of the application gateway</li>\n<li>Check the 'Application Gateway' dashboard in the Azure Portal for failures</li>\n</ul>",
+                                  "Importance": "Normal",
+                                  "IsHtml": true,
+                                  "Subject": "Unhealthy backend VM in Pool @{body('Parse_JSON')?['BackendPoolName']} on Application Gateway @{body('Parse_JSON')?['ApplicationGatewayName']}",
+                                  "To": "[parameters('emailRecipient')]"
+                              },
+                              "host": {
+                                  "connection": {
+                                      "name": "@parameters('$connections')['outlook']['connectionId']"
+                                  }
+                              },
+                              "method": "post",
+                              "path": "/Mail"
+                          }
+                      }
+                  },
+                  "outputs": {}
+              },
+              "parameters": {
+                  "$connections": {
+                      "value": {
+                          "outlook": {
+                              "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connections_outlook_name'))]",
+                              "connectionName": "[parameters('connections_outlook_name')]",
+                              "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+                          }
+                      }
+                  }
+              }
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/connections', parameters('connections_outlook_name'))]"
+          ]
+      },
+      {
+          "type": "Microsoft.Web/connections",
+          "name": "[parameters('connections_outlook_name')]",
+          "apiVersion": "2016-06-01",
+          "location": "[resourceGroup().location]",
+          "properties": {
+              "displayName": "[parameters('emailSender')]",
+              "customParameterValues": {},
+              "api": {
+                  "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+              }
+          },
+          "dependsOn": []
+      }
+  ]
 }
