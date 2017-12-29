@@ -1,0 +1,1333 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": { 
+        "dashboardName": {
+            "type": "string",
+            "defaultValue":  "Application Gateway",
+            "metadata": {
+                "description": "Display Name of the Dashboard"
+            }
+        },
+        "logAnalyticsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of an existing Log Analytics Workspace"
+            }
+        },
+        "logAnalyticsWorkspaceResourceGroup": {
+          "type": "string",
+          "metadata": {
+              "description": "Name of existing Log Analytics Workspace Resource Group"
+          }
+        }
+    },
+    "variables": {
+      "dashboardID": "[concat(uniquestring(resourceGroup().id), uniquestring(parameters('dashboardName')))]"
+    },
+    "resources": [
+        {
+            "name":  "[variables('dashboardID')]",
+            "type": "Microsoft.Portal/dashboards",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-08-01-preview",
+            "tags": {
+                "hidden-title": "[parameters('dashboardName')]"
+            },
+            "properties": {
+              "lenses": {
+                "0": {
+                  "order": 0,
+                  "parts": {
+                    "0": {
+                      "position": {
+                        "x": 0,
+                        "y": 0,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize avg(throughput_d) by Resource, bin(TimeGenerated, 1m)\r\n| extend ThroughputMb = (avg_throughput_d/1000)/1000\r\n| project Resource, TimeGenerated, ThroughputMb\r\n| render timechart\r\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "ThroughputMb",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part1')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Avg throughput per second (Mb)"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Avg throughput per second (Mb)",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "1": {
+                      "position": {
+                        "x": 6,
+                        "y": 0,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize max(unHealthyHostCount_d) by Resource, bin(TimeGenerated, 1m)\r\n| render timechart\r\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "max_unHealthyHostCount_d",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part2')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Unhealthy backend VM count"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Unhealthy backend VM count",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "2": {
+                      "position": {
+                        "x": 12,
+                        "y": 0,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize max(healthyHostCount_d) by Resource, bin(TimeGenerated, 1m)\r\n| render timechart\r\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "max_healthyHostCount_d",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part3')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Healthy backend VM Count"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Healthy backend VM Count",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "3": {
+                      "position": {
+                        "x": 18,
+                        "y": 0,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\n| where httpStatus_d >= 400\n| summarize count() by requestUri_s, bin(TimeGenerated, 1m)\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "requestUri_s",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part4')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Failed requests by API"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Failed requests by API",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "4": {
+                      "position": {
+                        "x": 0,
+                        "y": 4,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize avg(latency_d) by Resource, bin(TimeGenerated, 1m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "avg_latency_d",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part5')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Avg Latency (ms) by AppGW"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Avg Latency (ms) by AppGW",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "5": {
+                      "position": {
+                        "x": 6,
+                        "y": 4,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| summarize count() by requestUri_s, bin(TimeGenerated, 1m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "requestUri_s",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part6')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Requests per Min by API"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Requests per Min by API",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "6": {
+                      "position": {
+                        "x": 12,
+                        "y": 4,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| where requestUri_s == \"/\"\r\n| summarize count() by requestUri_s, bin(TimeGenerated, 1m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "requestUri_s",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part7')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "MyService API Requests per Min"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "MyService API Requests per Min",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "7": {
+                      "position": {
+                        "x": 18,
+                        "y": 4,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\" \n| where httpStatus_d >= 400\n| summarize count() by httpStatus_d, Resource\n | project httpStatus_d, Resource, count_"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part8')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Error count past hour by AppGW"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Error count past hour by AppGW",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "8": {
+                      "position": {
+                        "x": 0,
+                        "y": 8,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize avg(requestCount_d) by Resource, bin(TimeGenerated, 1m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "avg_requestCount_d",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part9')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Avg Requests per min"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Avg Requests per min",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "9": {
+                      "position": {
+                        "x": 6,
+                        "y": 8,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayPerformanceLog\"\r\n| summarize avg(failedRequestCount_d) by Resource, bin(TimeGenerated, 1m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "avg_failedRequestCount_d",
+                                  "type": "Double"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "Resource",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part10')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Avg Failed Requests per min"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Avg Failed Requests per min",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "10": {
+                      "position": {
+                        "x": 12,
+                        "y": 8,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| where httpStatus_d >= 400\r\n| summarize count(httpStatus_d) by httpStatus_d,requestUri_s, bin(TimeGenerated, 1h)\r\n| order by count_httpStatus_d desc\r\n| project httpStatus_d, requestUri_s, TimeGenerated, count_httpStatus_d\n | project httpStatus_d, requestUri_s, TimeGenerated, count_httpStatus_d"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part16')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "HTTP Error count per hour by API"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "HTTP Error count per hour by API",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "11": {
+                      "position": {
+                        "x": 18,
+                        "y": 8,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\n| where httpStatus_d < 400\n| summarize count() by httpStatus_d, Resource\n| project httpStatus_d, Resource, count_\n | project httpStatus_d, Resource, count_"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part11')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Successful request count"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Successful request count",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "12": {
+                      "position": {
+                        "x": 0,
+                        "y": 12,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| where httpStatus_d >= 400\r\n| parse requestQuery_s with * \"SERVER-ROUTED=\" serverRouted \"&\" *\r\n| extend httpStatus = tostring(httpStatus_d)\r\n| summarize count() by serverRouted, bin(TimeGenerated, 5m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "serverRouted",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part12')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Failed requests by backend VM"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Failed requests by backend VM",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "13": {
+                      "position": {
+                        "x": 6,
+                        "y": 12,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| where httpStatus_d < 400\r\n| parse requestQuery_s with * \"SERVER-ROUTED=\" serverRouted \"&\" *\r\n| extend httpStatus = tostring(httpStatus_d)\r\n| summarize count() by serverRouted, bin(TimeGenerated, 5m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "PT1H"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "serverRouted",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part13')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Successful requests by backend VM"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Successful requests by backend VM",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "14": {
+                      "position": {
+                        "x": 12,
+                        "y": 12,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| where httpStatus_d == 502\r\n| parse requestQuery_s with * \"SERVER-ROUTED=\" serverRouted \"&\" *\r\n| extend httpStatus = tostring(httpStatus_d)\r\n| summarize count() by serverRouted, bin(TimeGenerated, 5m)\r\n| render timechart\n"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "P7D"
+                          },
+                          {
+                            "name": "Dimensions",
+                            "value": {
+                              "xAxis": {
+                                "name": "TimeGenerated",
+                                "type": "DateTime"
+                              },
+                              "yAxis": [
+                                {
+                                  "name": "count_",
+                                  "type": "Int64"
+                                }
+                              ],
+                              "splitBy": [
+                                {
+                                  "name": "serverRouted",
+                                  "type": "String"
+                                }
+                              ],
+                              "aggregation": "Sum"
+                            }
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part14')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "HTTP 502 errors by backend VM"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsLineChartPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "HTTP 502 errors by backend VM",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    },
+                    "15": {
+                      "position": {
+                        "x": 18,
+                        "y": 12,
+                        "rowSpan": 4,
+                        "colSpan": 6
+                      },
+                      "metadata": {
+                        "inputs": [
+                          {
+                            "name": "ComponentId",
+                            "value": {
+                              "SubscriptionId": "[subscription().subscriptionId]",
+                              "ResourceGroup": "[parameters('logAnalyticsWorkspaceResourceGroup')]",
+                              "Name": "[parameters('logAnalyticsWorkspaceName')]"
+                            }
+                          },
+                          {
+                            "name": "Query",
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| distinct Resource\n | project Resource"
+                          },
+                          {
+                            "name": "TimeRange",
+                            "value": "P1D"
+                          },
+                          {
+                            "name": "Version",
+                            "value": "1.0"
+                          },
+                          {
+                            "name": "DashboardId",
+                            "value": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().Name,'/providers/Microsoft.Portal/dashboards/',variables('dashboardID'))]"
+                          },
+                          {
+                            "name": "PartId",
+                            "value": "[concat(uniquestring(variables('dashboardID')), 'Part15')]"
+                          },
+                          {
+                            "name": "PartTitle",
+                            "value": "Monitored AppGW List"
+                          },
+                          {
+                            "name": "PartSubTitle",
+                            "value": "Application Gateway"
+                          },
+                          {
+                            "name": "resourceTypeMode",
+                            "value": "workspace"
+                          }
+                        ],
+                        "type": "Extension/AppInsightsExtension/PartType/AnalyticsGridPart",
+                        "settings": {
+                          "content": {
+                            "dashboardPartTitle": "Monitored AppGW List",
+                            "dashboardPartSubTitle": "Application Gateway"
+                          }
+                        },
+                        "asset": {
+                          "idInputName": "ComponentId",
+                          "type": "ApplicationInsights"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "model": {
+                  "timeRange": {
+                    "value": {
+                      "relative": {
+                        "duration": 24,
+                        "timeUnit": 1
+                      }
+                    },
+                    "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+                  }
+                }
+              }
+            }            
+          }      
+    ]
+  }
