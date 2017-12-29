@@ -1,6 +1,6 @@
 # Application Gateway Monitoring Dashboard
 
-More info in blog: <>
+More info in blog: <https://blogs.technet.microsoft.com/robdavies/2017/12/29/monitoring-application-gateway-with-azure-log-analytics/>
 
 **PLEASE NOTE:** You must deploy this ARM template to the _Resource Group_ in which your Azure Log Analytics (OMS) workspace is located.
 
