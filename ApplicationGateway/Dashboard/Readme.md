@@ -11,12 +11,12 @@ Click the button!
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-## Deploy via CLI
+## Deploy Dashboard via CLI
 ```
 az group deployment create -g LogAnalyticsResourceGroupName --template-file AppGWDashboard.json --parameters '{"logAnalyticsWorkspaceName": {"value":"LogAnalyticsWorkspaceName"},"logAnalyticsWorkspaceResourceGroup":{"value":"LogAnalyticsResourceGroupName"}}' --verbose
 ```
 
-## Deploy via PowerShell
+## Deploy Dashboard via PowerShell
 ```
 New-AzureRmResourceGroupDeployment -ResourceGroupName 'LogAnalyticsResourceGroupName' -TemplateFile .\AppGWDashboard.json -logAnalyticsWorkspaceName 'LogAnalyticsWorkspaceName' -logAnalyticsWorkspaceResourceGroup 'LogAnalyticsResourceGroupName' -Verbose
 ```
