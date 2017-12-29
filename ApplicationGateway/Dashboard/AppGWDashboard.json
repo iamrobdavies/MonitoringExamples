@@ -1267,7 +1267,7 @@
                           },
                           {
                             "name": "Query",
-                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| distinct Resource\n | project Resource"
+                            "value": "AzureDiagnostics\r\n| where ResourceProvider == \"MICROSOFT.NETWORK\" and Category == \"ApplicationGatewayAccessLog\"\r\n| distinct Resource, ResourceGroup\n"
                           },
                           {
                             "name": "TimeRange",
