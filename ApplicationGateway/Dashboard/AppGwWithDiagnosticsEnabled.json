@@ -1,0 +1,261 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationGatewayName": {
+            "type": "string",
+            "metadata": {
+                "description": "This is the name of your application gateway"
+            }
+        },
+        "applicationGatewayPrivateIPAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "A not-in-use Private IP for the frontend of the Application Gateway. Must be in range of the Subnet in parameter virtualNetworkSubnetName"
+            }
+        },
+        "applicationGatewaySkuName": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_Small",
+                "Standard_Medium",
+                "Standard_Large"
+            ],
+            "metadata": {
+                "description": "Application Gateway sku name"
+            }
+        },
+        "applicationGatewayCapacity": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of instances for the application gateway"
+            }
+        },
+        "applicationGatewayCertificateData": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Base-64 encoded form of the .pfx file"
+            }
+        },
+        "applicationGatewayCertificatePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for .pfx certificate"
+            }
+        },
+        "myAppIpAddresses": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Ip addresses for myApp"
+            }
+        },
+        "LogRetentionDays": {
+            "type": "int",
+            "defaultValue": 30,
+            "metadata": {
+                "description": "Number of days to store diagnostic logs in storage account"
+            }
+        },
+        "virtualNetworkResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of RG which contains the existing virtual network to join"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing virtual network to join"
+            }
+        },
+        "virtualNetworkSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet inside the existing virtual network to join"
+            }
+        },
+        "logAnalyticsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Log Analytics workspace to send diagnostic data to"
+            }
+        },
+        "logAnalyticsWorkspaceResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Resource Group in which the existing Log Analytics workspace is in"
+            }
+        }
+    },
+    "variables": {
+        "vnetID": "[resourceId(parameters('virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "serviceSubnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('virtualNetworkSubnetName'))]",
+        "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways', parameters('applicationGatewayName'))]",
+        "workspaceId": "[resourceId(subscription().subscriptionId,parameters('logAnalyticsWorkspaceResourceGroupName'),'Microsoft.OperationalInsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]",
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-09-01",
+            "name": "[parameters('applicationGatewayName')]",
+            "type": "Microsoft.Network/applicationGateways",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('applicationGatewaySkuName')]",
+                    "tier": "Standard",
+                    "capacity": "[parameters('applicationGatewayCapacity')]"
+                },
+                "sslCertificates": [
+                    {
+                        "name": "appGatewaySslCert",
+                        "properties": {
+                            "data": "[parameters('applicationGatewayCertificateData')]",
+                            "password": "[parameters('applicationGatewayCertificatePassword')]"
+                        }
+                    }
+                ],
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "appGatewayIpConfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('serviceSubnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGatewayFrontendIP",
+                        "properties": {
+                            "privateIPAddress": "[parameters('applicationGatewayPrivateIPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[variables('serviceSubnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "myAppFrontEndPort",
+                        "properties": {
+                            "Port": 9001
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "myAppHealthProbe",
+                        "properties": {
+                            "protocol": "Http",
+                            "path": "/myApp/healthstatus",
+                            "host": "127.0.0.1",
+                            "interval": 20,
+                            "timeout": 2,
+                            "unhealthyThreshold": 2
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "myAppBackendAddressPool",
+                        "properties": {
+                            "BackendAddresses": "[parameters('myAppIpAddresses')]"
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "myAppBackendHttpSetting",
+                        "properties": {
+                            "Port": 8080,
+                            "Protocol": "Http",
+                            "CookieBasedAffinity": "Disabled",
+                            "requestTimeout": 30,
+                            "probe": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/probes/myAppHealthProbe')]"
+                            }
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "myAppHttpListener",
+                        "properties": {
+                            "FrontendIPConfiguration": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                            },
+                            "FrontendPort": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/myAppFrontendPort')]"
+                            },
+                            "Protocol": "Https",
+                            "SslCertificate": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/sslCertificates/appGatewaySslCert')]"
+                            }
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "name": "myAppRequestRoutingRule",
+                        "properties": {
+                            "RuleType": "Basic",
+                            "httpListener": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/httpListeners/myAppHttpListener')]"
+                            },
+                            "backendAddressPool": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/myAppBackendAddressPool')]"
+                            },
+                            "backendHttpSettings": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/myAppBackendHttpSetting')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-07-01",
+                    "type": "providers/diagnosticSettings",
+                    "name": "Microsoft.Insights/service",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/applicationGateways', parameters('applicationGatewayName'))]"
+                    ],
+                    "properties": {
+                        "workspaceId": "[variables('workspaceId')]",
+                        "logs": [
+                            {
+                                "category": "ApplicationGatewayAccessLog",
+                                "enabled": true,
+                                "retentionPolicy": {
+                                    "enabled": true,
+                                    "days": "[parameters('LogRetentionDays')]"
+                                }
+                            },
+                            {
+                                "category": "ApplicationGatewayPerformanceLog",
+                                "enabled": true,
+                                "retentionPolicy": {
+                                    "enabled": true,
+                                    "days": "[parameters('LogRetentionDays')]"
+                                }
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "timeGrain": "PT1M",
+                                "enabled": true,
+                                "retentionPolicy": {
+                                    "enabled": true,
+                                    "days": "[parameters('LogRetentionDays')]"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

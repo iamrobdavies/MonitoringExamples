@@ -1,0 +1,59 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationGatewayName": {
+            "value": "ContosoAppGW1"
+        },
+        "applicationGatewayPrivateIPAddress": {
+            "value": "10.0.20.8"
+        },
+        "applicationGatewaySkuName": {
+            "value": "Standard_Small"
+        },
+        "applicationGatewayCapacity": {
+            "value": 2
+        },
+        "applicationGatewayCertificateData": {
+            "reference": {
+                "keyVault": {
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/KevVaultRGName/providers/Microsoft.KeyVault/vaults/KeyVaultName"
+                },
+                "secretName": "applicationGatewayCertificateData"
+            }
+        },
+        "applicationGatewayCertificatePassword": {
+            "reference": {
+                "keyVault": {
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/KevVaultRGName/providers/Microsoft.KeyVault/vaults/KeyVaultName"
+                },
+                "secretName": "applicationGatewayCertificatePassword"
+            }
+        },
+        "myAppIpAddresses": {
+            "value": [
+                {
+                    "IpAddress": "10.0.12.4"
+                },
+                {
+                    "IpAddress": "10.0.12.5"
+                }
+            ]
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "VnetRG"
+        },
+        "virtualNetworkName": {
+            "value": "MyVNet"
+        },
+        "virtualNetworkSubnetName": {
+            "value": "AppGW"
+        },
+        "logAnalyticsWorkspaceName": {
+            "value": "myOMSWorkspace"
+        },
+        "logAnalyticsWorkspaceResourceGroupName": {
+            "value": "monitoring"
+        }
+    }
+}
