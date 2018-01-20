@@ -1,0 +1,27 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionAppName": {
+            "value": "UniqueNameOfNewFunction"
+        },
+        "keyVaultName": {
+            "value": "myKVName"
+        },
+        "subscriptionId": {
+            "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+        },
+        "keyVaultResourceGroupName": {
+            "value": "keyVaultRG"
+        },
+        "testSecretName": {
+            "value": "supersecret"
+        },
+        "LogAnalyticsWorkspaceID": {
+            "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+        },
+        "LogAnalyticsWorkspaceKey": {
+            "value": "Key or Key Vault secret reference"
+        }
+    }
+}
