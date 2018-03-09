@@ -1,0 +1,24 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionAppName": {
+            "value": "myUniqueFunctionName"
+        },
+        "LogAnalyticsWorkspaceID": {
+            "value": "LogAnlayticsWorkSpaceID"
+        },
+        "LogAnalyticsWorkspaceKey": {
+            "value": "LogAnalyticsWorkspaceKey"
+        },
+        "aadTenantDomain": {
+            "value": "contoso.work"
+        },
+        "aadClientID":{
+            "value": "aadAppID"
+        },
+        "aadClientSecret":{
+            "value": "aadAppKey"
+        }
+    }
+}
